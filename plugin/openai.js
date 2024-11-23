@@ -1,8 +1,9 @@
 const OpenAI = require("openai");
 const openai = new OpenAI({
-  baseURL: "https://api.gptgod.online/v1/",
-  apiKey: "sk-E1c2iWjeGfCI4fIMdxFI95AppGd1SmzGCnoH8xnGbsRpY8p0",
+  baseURL: process.env.BASEURL,
+  apiKey:  process.env.APIKEY,
 });
+require('dotenv').config();
 
 const sendMessage = async () => {
   const completion = await openai.chat.completions.create({

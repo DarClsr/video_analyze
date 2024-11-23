@@ -1,7 +1,7 @@
 const { readFile,existsSync,mkdirSync,writeFileSync, createWriteStream } = require("fs");
 const path = require("path");
 const http = require("http");
-
+require('dotenv').config();
 const Bull = require("bull");
 const Redis = require("redis");
 const { ananlyeVideo } = require("./frame");
@@ -9,7 +9,7 @@ const Busboy = require('busboy');
 
 // 创建 Redis 客户端
 const redisClient = Redis.createClient({
-    url: 'redis://127.0.0.1:6379' // 本地 Redis
+    url: `redis://${process.env.REDISHOST}:${process.env.REDISPORT}` // 本地 Redis
 });
 redisClient.on("error", (err) => console.error("Redis Error:", err));
 
@@ -17,13 +17,18 @@ redisClient.connect()
 
 // 创建 Bull 队列
 const taskQueue = new Bull("file-processing", {
-  redis: { host: "127.0.0.1", port: 6379 },
+  redis: { host: process.env.REDISHOST, port: process.env.REDISPORT },
 });
 
 const uploadDirectory = path.join(__dirname, "uploads");
+const frameDirectory = path.join(__dirname, "frames");
 if (!existsSync(uploadDirectory)) {
   mkdirSync(uploadDirectory); // 如果目录不存在，则创建
 }
+
+if (!existsSync(frameDirectory)) {
+    mkdirSync(frameDirectory); // 如果目录不存在，则创建
+  }
 
 const server = http.createServer((req, res) => {
   const filePath =
