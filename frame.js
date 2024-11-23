@@ -12,7 +12,7 @@ const ananlyeVideo = async (filepath) => {
 
   let list = [];
 
-  for (let item of video_info.slice(0, 1)) {
+  for (let item of video_info.slice(0, 3)) {
     const base64_image = readFileSync(item.outputFile, "base64");
     const image_desc = await ananlyeVideoItem(base64_image);
 
@@ -38,7 +38,7 @@ const ananlyeVideo = async (filepath) => {
     });
 
     if(Array.isArray(info)){
-        result_list = content;
+        result_list = info;
     }
 
     if (info && info.messages && Array.isArray(info.messages)) {
@@ -58,6 +58,7 @@ const ananlyeVideo = async (filepath) => {
       {
         r,
         script,
+        e
       },
       "json 解析出错"
     );
