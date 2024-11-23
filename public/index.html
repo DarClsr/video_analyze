@@ -99,7 +99,10 @@
             // 创建视频预览
             const videoPreview = document.getElementById("video-preview");
             const placeholderText = document.getElementById("placeholder-text");
-            placeholderText.style.display = "none"; // 隐藏提示文本
+
+            if(placeholderText){
+                placeholderText.style.display = "none"; // 隐藏提示文本
+            }
 
             // 如果已有视频预览，先清空
             videoPreview.innerHTML = "";
