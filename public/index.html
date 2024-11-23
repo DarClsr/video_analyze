@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>视频分析</title>
+</head>
+
+<body>
+
+    <div class="containter px-5">
+        <h1 class="text-3xl font-bold p-3">
+            视频分析
+        </h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4  mb-4">
+            <div class="md:row-span-1 lg:row-span-1 xl:row-span-2 md:col-span-2 lg:col-span-2 xl:col-span-1">
+                <!-- 上传框 -->
+                <div
+                    class="border border-dashed border-gray-500 relative p-4 flex justify-center items-center flex-col space-y-4">
+                    <!-- 视频上传区域 -->
+                    <div id="video-preview" class="w-full h-80 flex justify-center items-center bg-gray-100">
+                        <!-- 如果未上传视频时，显示提示 -->
+                        <p id="placeholder-text" class="text-gray-400">上传视频预览</p>
+                    </div>
+
+                    <!-- 文件输入框 -->
+                    <input type="file" id="upload_file" class="hidden" accept=".mp4"
+                        onchange="handleFileUpload(event)" />
+                    <label for="upload_file"
+                        class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        上传视频
+                    </label>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="mt-4 flex justify-between">
+                    <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-300"
+                        id="submit-btn" disabled onclick="handleSubmit()">
+                        分析
+                    </button>
+                    <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600" id="clear-btn"
+                        onclick="handleClear()">
+                        清空
+                    </button>
+                </div>
+            </div>
+            <div id="task-container"
+                class="sm:col-span-3 md:col-span-2 lg:col-span-2 xl:col-span-3 border border-gray-300 rounded-lg p-4">
+                <!-- 占位内容 -->
+                <p id="placeholder" class="text-gray-500 text-center">暂无任务</p>
+
+                <!-- 动态内容 (初始隐藏) -->
+                <div id="task-info" class="hidden">
+                    <h3 class="text-lg font-bold mb-4">任务详情</h3>
+                    <div class="mb-4">
+                        <p><span class="font-semibold">任务名称:</span> <span id="task-name"></span></p>
+                        <div class="flex"><span class="font-semibold mr-2">任务状态:</span>
+                            <span id="task-status" class="ml-2">
+                            </span>
+                            <div
+                            id="status-loading"
+                                class="ml-auto  w-5 h-5 border-2 border-red-300 border-t-transparent rounded-full animate-spin">
+                            </div>
+                        </div>
+                    </div>
+                    <table class="w-full border-collapse border border-gray-200">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border border-gray-200 px-4 py-2">时间</th>
+                                <th class="border border-gray-200 px-4 py-2">内容</th>
+                                <th class="border border-gray-200 px-4 py-2">封面</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-table-body">
+                            <!-- 动态插入行 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+<script>
+
+    let selectedFile = null; // 用于存储选中的文件
+
+    // / 处理文件上传
+    function handleFileUpload(event) {
+        const fileInput = event.target;
+        const file = fileInput.files[0]; // 获取选中的文件
+        selectedFile = fileInput.files[0]
+        if (file && file.type === "video/mp4") {
+            // 创建视频预览
+            const videoPreview = document.getElementById("video-preview");
+            const placeholderText = document.getElementById("placeholder-text");
+            placeholderText.style.display = "none"; // 隐藏提示文本
+
+            // 如果已有视频预览，先清空
+            videoPreview.innerHTML = "";
+
+            const video = document.createElement("video");
+            video.src = URL.createObjectURL(file);
+            video.controls = true;
+            video.className = "w-full h-full object-contain";
+            videoPreview.appendChild(video);
+
+            // 启用提交按钮
+            document.getElementById("submit-btn").disabled = false;
+        } else {
+            alert("Please upload a valid MP4 video file.");
+            fileInput.value = ""; // 清空输入框
+        }
+    }
+
+    let taskData = {
+        name: '默认任务',
+        status: 1, // 可以是 'Completed' 或 'Failed'
+        details: [
+            {
+                time_range: '0.00-0.000000',
+                content: '这是一张广告宣传图，主题是“建筑资质办理”。文案强调“一对一服务，全程跟踪到位” ，并配有感慨语句表达创业坚持与感谢，同时提到“钢结构审批加速”的相关内容。',
+                cover: '/frames/frame-0.png'
+            }
+        ],
+    };
+
+    // updateTaskInfo(taskData)
+
+
+
+    const getTaskStatus = async () => {
+        const response = await fetch("/status?id=" + taskData.name, {
+            method: "GET",
+        });
+        return response.json()
+
+    }
+
+    const intervalTask = () => {
+        const pollInterval = setInterval(async () => {
+            // 查询任务状态
+            const response = await getTaskStatus();
+            taskData.status = response.status;
+            taskData.details = response.details;
+            updateTaskInfo(taskData);
+
+            // 判断任务状态
+            if (taskData.status === '2' || taskData.status === '3') {
+                clearInterval(pollInterval); // 停止轮询
+                console.log(`Task finished with status: ${taskData.status}`);
+            }
+        }, 5000); // 每5秒查询一次状态
+    }
+
+    // 提交操作
+    async function handleSubmit() {
+        if (!selectedFile) {
+            alert("暂未选择文件!");
+            return;
+        }
+
+        // 构造 FormData
+        const formData = new FormData();
+        formData.append("video", selectedFile);
+
+        try {
+            // 使用 fetch 提交文件到服务器
+            const response = await fetch("/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(`File uploaded successfully! Server Response: ${JSON.stringify(result)}`);
+                taskData = result;
+                taskData.status = 1;
+                taskData.name = result.taskId;
+                updateTaskInfo(taskData)
+                intervalTask()
+            } else {
+                alert("Failed to upload file.");
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("An error occurred during upload.");
+        }
+    }
+
+    // 清空操作
+    function handleClear() {
+        // 重置文件输入框
+        const fileInput = document.getElementById("upload_file");
+        fileInput.value = "";
+
+        // 重置预览区域
+        const videoPreview = document.getElementById("video-preview");
+        videoPreview.innerHTML = '<p id="placeholder-text" class="text-gray-400">上传视频预览</p>';
+
+        // 禁用提交按钮
+        document.getElementById("submit-btn").disabled = true;
+    }
+
+
+    // 更新任务信息的方法
+    function updateTaskInfo(task) {
+        // 隐藏占位内容
+        document.getElementById('placeholder').classList.add('hidden');
+
+        // 显示任务信息区域
+        const taskInfo = document.getElementById('task-info');
+        taskInfo.classList.remove('hidden');
+
+        // 填充任务信息
+        document.getElementById('task-name').textContent = task.name;
+
+        if(task.status==2){
+            document.getElementById('task-status').textContent = "成功";
+            document.getElementById('task-status').className="text-success-500"
+            document.getElementById('status-loading').classList.add("hidden")
+        }
+        if(task.status==3){
+            document.getElementById('task-status').textContent = "失败";
+            document.getElementById('task-status').className="text-red-500"
+            document.getElementById('status-loading').classList.add("hidden")
+
+        }
+        if(task.status==1){
+            document.getElementById('task-status').textContent = "执行中";
+            document.getElementById('task-status').className="text-orange-500"
+            document.getElementById('status-loading').classList.remove("hidden")
+        }
+
+        // 填充表格
+        const tableBody = document.getElementById('task-table-body');
+        tableBody.innerHTML = ''; // 清空表格
+
+        let details = task.details || [];
+        details.forEach(detail => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+            <td class="border border-gray-200 px-4 py-2 text-nowrap" >${detail.time_range}</td>
+            <td class="border border-gray-200 px-4 py-2 ">${detail.content}</td>
+            <td class="border border-gray-200 px-4 py-2"  >
+                <img src="http://localhost:5000/images${detail.cover}" class="text-blue-500 underline w-[100px]" />
+            </td>
+        `;
+            tableBody.appendChild(row);
+        });
+    }
+
+
+
+
+</script>
+
+</html>
