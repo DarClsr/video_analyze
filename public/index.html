@@ -72,6 +72,7 @@
                                 <th class="border border-gray-200 px-4 py-2">时间</th>
                                 <th class="border border-gray-200 px-4 py-2">内容</th>
                                 <th class="border border-gray-200 px-4 py-2">封面</th>
+                                <th class="border border-gray-200 px-4 py-2">标签</th>
                             </tr>
                         </thead>
                         <tbody id="task-table-body">
@@ -252,6 +253,9 @@
             <td class="border border-gray-200 px-4 py-2 ">${detail.content}</td>
             <td class="border border-gray-200 px-4 py-2"  >
                 <img src="http://localhost:5000/images${detail.cover}" class="text-blue-500 underline w-[100px]" />
+            </td>
+            <td class="border border-gray-200 px-4 py-2"  >
+                 ${detail.tags}
             </td>
         `;
             tableBody.appendChild(row);

@@ -12,11 +12,11 @@ const ananlyeVideo = async (filepath) => {
 
   let list = [];
 
-  for (let item of video_info.slice(0, 3)) {
+  for (let item of video_info) {
     const base64_image = readFileSync(item.outputFile, "base64");
     const image_desc = await ananlyeVideoItem(base64_image);
 
-    console.log("处理图片", item.outputFile, item.timestamp);
+    console.log("处理图片", item.outputFile, item.timestamp,image_desc);
 
     list.push({
       ...item,
@@ -32,13 +32,17 @@ const ananlyeVideo = async (filepath) => {
   let result_list = [];
   try {
     const info = JSON.parse(input_text);
-    console.log({
-      ...info,
-      script
-    });
+    console.log(
+      {
+        script,
+      },
+      "script"
+    );
 
-    if(Array.isArray(info)){
-        result_list = info;
+    console.log(info, "info");
+
+    if (info.details&&Array.isArray(info.details)) {
+      result_list = info?.details;
     }
 
     if (info && info.messages && Array.isArray(info.messages)) {
@@ -47,8 +51,8 @@ const ananlyeVideo = async (filepath) => {
         result_list = content;
       }
 
-      if(typeof content == "string"){
-        result_list=JSON.parse(content)
+      if (typeof content == "string") {
+        result_list = JSON.parse(content);
       }
     }
   } catch (e) {
@@ -58,7 +62,7 @@ const ananlyeVideo = async (filepath) => {
       {
         r,
         script,
-        e
+        e,
       },
       "json 解析出错"
     );
@@ -66,8 +70,9 @@ const ananlyeVideo = async (filepath) => {
 
   return result_list.map((v, index) => {
     const cover = video_info[index]?.outputFile;
+    const details = v.details ?? v;
     return {
-      ...v,
+      ...details,
       cover,
     };
   });

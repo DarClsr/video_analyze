@@ -173,7 +173,7 @@ function handleTaskStatus(req, res) {
 let port = 5000;
 
 server.listen(port, () => {
-  console.log("start prot success");
+  console.log("start prot success",`http://localhost:${port}`);
 });
 
 // 消息队列处理

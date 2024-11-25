@@ -22,7 +22,8 @@ const sendMessage = async () => {
 
 const ananlyeVideoItem = async (base64_image) => {
   const completion = await openai.chat.completions.create({
-    model: "gpt-4-vision-preview",
+    // model: "gpt-4-vision-preview",
+    model: "gpt-4o-mini",
     messages: [
       { role: "system", content: "图片分析助手" },
       {
@@ -30,7 +31,7 @@ const ananlyeVideoItem = async (base64_image) => {
         content: [
           {
             type: "text",
-            text: "这是我想要上传的视频中的关键画面，请归纳图片内容，内容尽量简洁一些，不超过100字",
+            text: "请简洁描述所涉及内容，不要出现类似 “画面”“元素”“场景” 等指代所给内容的词汇，就如同直接描述一件事或一个情况那样，之后再给出 3 至 5 个贴合该描述的简洁标签",
           },
           {
             type: "image_url",
@@ -59,7 +60,7 @@ const createScript = async (list) => {
           {
             type: "text",
             text: `以下是我的一段数据，其中涵盖了主要场景的详细内容以及对应的时间信息。请帮我对这些数据进行整合与归纳，并将其整理成一个脚本，要求各部分时长保持一致。
-            ’请返回一个标准的JSON数组格式的数据，如[{"time_range": "value1", "content": "value2"}]。仅生成JSON数据，不能有其它文本或附加信息。
+            ’请返回一个标准的JSON数组格式的数据，如["details":{"time_range": "value1", "content": "value2","tags":"value3"}]。仅生成JSON数据，不能有其它文本或附加信息,层级不能太深。
             `,
           },
           {
